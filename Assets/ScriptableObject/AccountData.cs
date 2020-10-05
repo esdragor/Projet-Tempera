@@ -9,6 +9,13 @@ public class AccountData : ScriptableObject
     public string username;
     public string mail;
 
+    public int gold;
+
+    public int energy;
+
+    public int gems;
+
+
 
 
     public void SetUsername(string _username)
@@ -32,7 +39,7 @@ public class AccountData : ScriptableObject
         return idPlayfab;
     }
 
-    
+
     public void SetMail(string _mail)
     {
         mail = _mail;

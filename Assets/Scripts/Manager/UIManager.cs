@@ -43,6 +43,15 @@ public class UIManager : MonoBehaviour
 
     [Header("MESSAGE GAME")]
     public Text textConnexion;
+
+    [Header("DATA GAME")]
+
+    public Text levelText;
+    public Text nameText;
+    public Text goldText;
+    public Text gemsText;
+    public Text energyText;
+
     void Start()
     {
 
@@ -52,6 +61,15 @@ public class UIManager : MonoBehaviour
     void Update()
     {
 
+    }
+
+
+    public void ActualizeData()
+    {
+        nameText.text = GameManager.Instance.localAccountData.GetUsername();
+        goldText.text = GameManager.Instance.localAccountData.gold.ToString();
+        gemsText.text = GameManager.Instance.localAccountData.gems.ToString();
+        energyText.text = GameManager.Instance.localAccountData.energy.ToString();
     }
 
 

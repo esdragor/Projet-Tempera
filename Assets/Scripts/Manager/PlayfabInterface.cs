@@ -42,9 +42,6 @@ public class PlayfabInterface : MonoBehaviour
         }
 
         InitPlayfab("C08BA");
-        OnConnexion += UpdateAccountData;
-
-
     }
 
     private void InitPlayfab(string id)
@@ -78,6 +75,7 @@ public class PlayfabInterface : MonoBehaviour
     {
         var registerRequest = new RegisterPlayFabUserRequest();
         registerRequest.Email = _mail;
+        temp_mail = _mail;
         registerRequest.Password = _password;
         registerRequest.Username = _username;
         PlayFabClientAPI.RegisterPlayFabUser(registerRequest, OnRegisterSuccess, OnRegisterFailure);
@@ -105,11 +103,20 @@ public class PlayfabInterface : MonoBehaviour
         PlayFabClientAPI.GetPlayerProfile(updateRequest, OnPlayerProfileSuccess, OnPlayerProfileFailure);
 
     }
-    internal void UpdateAccountData()
-    {
-        UpdateUsername("ErwangeGerot");
-        UpdateContactEmail("syhfrappez@gmail.com");
 
+    internal void GetCurrencies()
+    {
+        PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest(),
+                  result =>
+                  {
+                      foreach (KeyValuePair<string, int> langage in result.VirtualCurrency)
+                      {
+                          SetCurrencies(langage.Key, langage.Value);
+                      }
+                      UIManager.Instance.ActualizeData();
+                      SceneManager.Instance.LoadingScene(SceneManager.SceneType.MENU);
+                  },
+                   error => { Debug.LogError(error.GenerateErrorReport()); });
     }
 
 
@@ -126,17 +133,15 @@ public class PlayfabInterface : MonoBehaviour
 
     void OnRegisterSuccess(RegisterPlayFabUserResult result)
     {
+        GameManager.Instance.localAccountData.SetUsername(temp_mail);
         GameManager.Instance.localAccountData.SetUsername(result.Username);
         GameManager.Instance.localAccountData.SetID(result.PlayFabId);
-        
-
- 
         var updateRequest = new UpdateUserTitleDisplayNameRequest();
         updateRequest.DisplayName = GameManager.Instance.localAccountData.GetUsername();
         PlayFabClientAPI.UpdateUserTitleDisplayName(updateRequest, OnUpdateNameSuccess, OnUpdateNameFailure);
-     
 
-       // UpdateAccountData();
+
+        // UpdateAccountData();
 
     }
 
@@ -148,9 +153,19 @@ public class PlayfabInterface : MonoBehaviour
 
     }
 
-    void OnLoginSuccess(LoginResult result)
+    void OnLoginSuccess(LoginResult login)
     {
-
+        GameManager.Instance.localAccountData.idPlayfab = login.PlayFabId;
+        PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+        {
+            PlayFabId = login.PlayFabId,
+            ProfileConstraints = new PlayerProfileViewConstraints()
+            {
+                ShowDisplayName = true
+            }
+        },
+        result => SetData(result),
+        error => Debug.LogError(error.GenerateErrorReport()));
 
     }
 
@@ -181,9 +196,7 @@ public class PlayfabInterface : MonoBehaviour
 
     void OnUpdateNameSuccess(UpdateUserTitleDisplayNameResult result)
     {
-
-        SceneManager.Instance.LoadingScene(SceneManager.SceneType.MENU);
-        Debug.LogError("Name GOOD");
+        GetCurrencies();
 
     }
 
@@ -208,6 +221,21 @@ public class PlayfabInterface : MonoBehaviour
 
     }
 
+    private void SetCurrencies(string key, int value)
+    {
+        if (key.Equals("OR"))
+            GameManager.Instance.localAccountData.gold = value;
+        if (key.Equals("GE"))
+            GameManager.Instance.localAccountData.gems = value;
+        if (key.Equals("EN"))
+            GameManager.Instance.localAccountData.energy = value;
+    }
+
+    private void SetData(GetPlayerProfileResult result)
+    {
+        GameManager.instance.localAccountData.SetUsername(result.PlayerProfile.DisplayName);
+        GetCurrencies();
+    }
 
     #endregion
 

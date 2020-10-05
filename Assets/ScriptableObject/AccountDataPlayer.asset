@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6b75a116b9e5ed4b99f5268ba9747c1, type: 3}
   m_Name: AccountDataPlayer
   m_EditorClassIdentifier: 
-  idPlayfab: 1870
-  username: aaaaaaaaz
-  mail: sylvain.du.81@hotmail.fr
-  language: 
-  avatarURL: 
+  idPlayfab: B267B440401A9395
+  username: admin1
+  mail: 
+  gold: 500
+  energy: 20
+  gems: 0

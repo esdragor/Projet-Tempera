@@ -30,35 +30,45 @@ public class ConnexionLogin : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        CheatLogin();
     }
 
 
-    public void BackToLogin()
+    private void CheatLogin()
     {
-        registerPanel.SetActive(false);
-        loginPanel.SetActive(true);
-    }
-
-    public void GoToRegister()
-    {
-        registerPanel.SetActive(true);
-        loginPanel.SetActive(false);
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            usernameLogin.text = "admin1";
+            passwordLogin.text = "admin1";
+            
+        }
+        if (Input.GetKeyDown(KeyCode.F2))
+        {
+            usernameLogin.text = "admin2";
+            passwordLogin.text = "admin2";
+            
+        }
+        if (Input.GetKeyDown(KeyCode.F3))
+        {
+            usernameLogin.text = "admin3";
+            passwordLogin.text = "admin3";
+      
+        }
     }
 
     public void ButtonLogin()
     {
-    //    PlayfabInterface.instance.LoginUnity();
-     
+        PlayfabInterface.instance.LoginUnity(usernameLogin.text, passwordLogin.text);
+
     }
 
     public void ButtonRegister()
     {
-       PlayfabInterface.instance.RegisterUnity(usernameRegister.text, passwordRegister.text, mailRegister.text);
+        PlayfabInterface.instance.RegisterUnity(usernameRegister.text, passwordRegister.text, mailRegister.text);
     }
 
 
-   
+
 
 
 
