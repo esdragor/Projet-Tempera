@@ -41,7 +41,7 @@ public class PlayfabInterface : MonoBehaviour
             instance = this;
         }
 
-        InitPlayfab("C08BA");
+        InitPlayfab("5357B");
     }
 
     private void InitPlayfab(string id)
