@@ -130,7 +130,7 @@ public class PlayfabInterface : MonoBehaviour
 
         var updateRequest = new GetCatalogItemsRequest();
         updateRequest.CatalogVersion = "Items";
-        PlayFabClientAPI.GetCatalogItems(new GetCatalogItemsRequest(),ItemsList,OnRegisterFailure);
+        PlayFabClientAPI.GetCatalogItems(new GetCatalogItemsRequest(), ItemsList, OnRegisterFailure);
 
 
 
@@ -143,8 +143,26 @@ public class PlayfabInterface : MonoBehaviour
             Items temp = new Items();
             temp.id = result.Catalog[i].ItemId;
             temp.itemsName = result.Catalog[i].DisplayName;
-            temp.typeOfItems = Items.SetTypeOfItems(result.Catalog[i].ItemClass);
-           // temp.levelRequiered = result.Catalog[i].CustomData
+            for(int j = 0; j < result.Catalog[i].Tags.Count; j++)
+            {
+                temp.typeOfItems[j] = Items.SetTypeOfItems(result.Catalog[i].Tags[j]);
+            }
+            temp.urlImg = result.Catalog[i].ItemImageUrl;
+            temp.itemMetier = Items.SetTypeOfMetier(result.Catalog[i].ItemClass);
+            temp.isStackable = result.Catalog[i].IsStackable;
+            temp.itemDescription = result.Catalog[i].Description;
+            foreach (KeyValuePair<string, uint> currency in result.Catalog[i].VirtualCurrencyPrices)
+            {
+                if (currency.Key.Equals("EN"))
+                    temp.costEnergy = (int)currency.Value;
+
+                if (currency.Key.Equals("OR"))
+                    temp.costGold = (int)currency.Value;
+
+                if (currency.Key.Equals("GE"))
+                    temp.costGems = (int)currency.Value;
+            }
+            // temp.levelRequiered = result.Catalog[i].CustomData
 
         }
 

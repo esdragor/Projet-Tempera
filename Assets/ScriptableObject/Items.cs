@@ -10,13 +10,24 @@ public class Items : ScriptableObject
         Construction,
         Craft,
         Matiere,
+        Interagir,
+        None
+    }
+
+       public enum TypeOfMetiers
+    {
+        Mineur,
+        Forgeron,
+        Bucheron,
         None
     }
 
     public string id;
     public string itemsName;
     public string itemDescription;
-    public TypeOfItems typeOfItems;
+    public string urlImg;
+    public TypeOfMetiers itemMetier;
+    public List<TypeOfItems> typeOfItems;
     public int levelRequiered;
     public int timeRequiered;
     public int costEnergy;
@@ -24,6 +35,7 @@ public class Items : ScriptableObject
     public int costGems;
     public int sellGold;
     public int buyGold;
+    public bool isStackable;
 
 
     public static TypeOfItems SetTypeOfItems(string name)
@@ -36,6 +48,18 @@ public class Items : ScriptableObject
             return TypeOfItems.Matiere;
 
         return TypeOfItems.None;
+    }
+
+    public static TypeOfMetiers SetTypeOfMetier(string name)
+    {
+        if (name.Equals("Mineur"))
+            return TypeOfMetiers.Mineur;
+        if (name.Equals("Forgeron"))
+            return TypeOfMetiers.Forgeron;
+        if (name.Equals("Bucheron"))
+            return TypeOfMetiers.Bucheron;
+
+        return TypeOfMetiers.None;
     }
 
     /* public static int SetTypeOfItems(string name)
