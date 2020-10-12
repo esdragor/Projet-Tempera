@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using PlayFab;
 using PlayFab.ClientModels;
+using PlayFab.CloudScriptModels;
 using UnityEngine;
 
 public class PlayfabInterface : MonoBehaviour
@@ -130,7 +132,7 @@ public class PlayfabInterface : MonoBehaviour
 
         var updateRequest = new GetCatalogItemsRequest();
         updateRequest.CatalogVersion = "Items";
-        PlayFabClientAPI.GetCatalogItems(new GetCatalogItemsRequest(),ItemsList,OnRegisterFailure);
+        PlayFabClientAPI.GetCatalogItems(new GetCatalogItemsRequest(), ItemsList, OnRegisterFailure);
 
 
 
@@ -144,7 +146,8 @@ public class PlayfabInterface : MonoBehaviour
             temp.id = result.Catalog[i].ItemId;
             temp.itemsName = result.Catalog[i].DisplayName;
             temp.typeOfItems = Items.SetTypeOfItems(result.Catalog[i].ItemClass);
-           // temp.levelRequiered = result.Catalog[i].CustomData
+            //result.Catalog[i].VirtualCurrencyPrices.
+            // temp.levelRequiered = result.Catalog[i].CustomData
 
         }
 
@@ -166,10 +169,7 @@ public class PlayfabInterface : MonoBehaviour
         GameManager.Instance.localAccountData.SetUsername(temp_mail);
         GameManager.Instance.localAccountData.SetUsername(result.Username);
         GameManager.Instance.localAccountData.SetID(result.PlayFabId);
-        SetData();
-
-
-
+        UpdatePlayerData();
     }
     void OnRegisterFailure(PlayFabError error)
     {
@@ -219,34 +219,12 @@ public class PlayfabInterface : MonoBehaviour
 
     }
 
-    async void SetData()
+    private void UpdatePlayerData()
     {
         UpdateUsername(GameManager.Instance.localAccountData.GetUsername());
-        UpdatePlayerLevel(1);
         GetCurrencies();
-
-        pendingRequest = true;
-        UIManager.Instance.ActualizeData();
-        pendingRequest = true;
-        SceneManager.Instance.LoadingScene(SceneManager.SceneType.MENU);
+        SetLevelAzur();
     }
-    void UpdatePlayerLevel(int level)
-    {
-        pendingRequest = true;
-        PlayFabClientAPI.UpdatePlayerStatistics(new UpdatePlayerStatisticsRequest
-        {
-            Statistics = new List<StatisticUpdate> {
-        new StatisticUpdate { StatisticName = "Level", Value = level }
-         }
-        },
-         result2 =>
-         {
-             GameManager.Instance.localAccountData.level = 1;
-             pendingRequest = false;
-         },
-          error => { Debug.LogError(error.GenerateErrorReport()); });
-    }
-
     IEnumerator WaitEndOfRequest()
     {
         while (pendingRequest)
@@ -289,8 +267,62 @@ public class PlayfabInterface : MonoBehaviour
     {
         GameManager.instance.localAccountData.SetUsername(result.PlayerProfile.DisplayName);
         GetCurrencies();
+
+
+        /* PlayFabCloudScriptAPI.ExecuteFunction(new ExecuteFunctionRequest()
+         {
+             Entity = new PlayFab.CloudScriptModels.EntityKey()
+             {
+                 Id = PlayFabSettings.staticPlayer.EntityId, //Get this from when you logged in,
+                 Type = PlayFabSettings.staticPlayer.EntityType, //Get this from when you logged in
+             },
+             FunctionName = "FirstMessage", //This should be the name of your Azure Function that you created.
+             FunctionParameter = new Dictionary<string, object>() { { "inputValue", "Test" } }, //This is the data that you would want to pass into your function.
+             GeneratePlayStreamEvent = false //Set this to true if you would like this call to show up in PlayStream
+         }, (ExecuteFunctionResult result2) =>
+         {
+             if (result2.FunctionResultTooLarge ?? false)
+             {
+                 Debug.Log("This can happen if you exceed the limit that can be returned from an Azure Function, See PlayFab Limits Page for details.");
+                 return;
+             }
+             Debug.Log($"The {result2.FunctionName} function took {result2.ExecutionTimeMilliseconds} to complete");
+             Debug.Log($"Result: {result2.FunctionResult.ToString()}");
+         }, (PlayFabError error) =>
+         {
+             Debug.Log($"Opps Something went wrong: {error.GenerateErrorReport()}");
+         });*/
     }
 
+
+
+
+    private void SetLevelAzur()
+    {
+        PlayFabCloudScriptAPI.ExecuteFunction(new ExecuteFunctionRequest()
+        {
+            Entity = new PlayFab.CloudScriptModels.EntityKey()
+            {
+                Id = PlayFabSettings.staticPlayer.EntityId, //Get this from when you logged in,
+                Type = PlayFabSettings.staticPlayer.EntityType, //Get this from when you logged in
+            },
+            FunctionName = "SetDataRegister", //This should be the name of your Azure Function that you created.
+            //FunctionParameter = new Dictionary<string, object>() { { "inputValue", "Test" } }, //This is the data that you would want to pass into your function.
+            GeneratePlayStreamEvent = false //Set this to true if you would like this call to show up in PlayStream
+        }, (ExecuteFunctionResult result2) =>
+        {
+            Debug.Log("SET LEVEL TO " + result2.FunctionResult.ToString());
+            GameManager.Instance.localAccountData.level = Int32.Parse(result2.FunctionResult.ToString());
+            UIManager.Instance.ActualizeData();
+            SceneManager.Instance.LoadingScene(SceneManager.SceneType.MENU);
+
+
+
+        }, (PlayFabError error) =>
+        {
+            Debug.Log($"Opps Something went wrong: {error.GenerateErrorReport()}");
+        });
+    }
     #endregion
 
 }
