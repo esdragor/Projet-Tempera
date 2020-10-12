@@ -13,9 +13,19 @@ public class Items : ScriptableObject
         None
     }
 
+       public enum TypeOfMetiers
+    {
+        Mineur,
+        Forgeron,
+        Bucheron,
+        None
+    }
+
     public string id;
     public string itemsName;
     public string itemDescription;
+    public string urlImg;
+    public TypeOfMetiers itemMetier;
     public TypeOfItems typeOfItems;
     public int levelRequiered;
     public int timeRequiered;
