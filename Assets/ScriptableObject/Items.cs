@@ -15,6 +15,7 @@ public class Items : ScriptableObject
 
     public string id;
     public string itemsName;
+    public string itemDescription;
     public TypeOfItems typeOfItems;
     public int levelRequiered;
     public int timeRequiered;
