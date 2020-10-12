@@ -15,7 +15,7 @@ public class AccountData : ScriptableObject
 
     public int gems;
 
-
+    public int level;
 
 
     public void SetUsername(string _username)

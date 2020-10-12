@@ -13,6 +13,8 @@ public class PlayfabInterface : MonoBehaviour
     private string temp_username;
     private string idPlayfab;
 
+    private bool pendingRequest = false;
+
 
 
 
@@ -42,6 +44,7 @@ public class PlayfabInterface : MonoBehaviour
         }
 
         InitPlayfab("5357B");
+        StartCoroutine("WaitEndOfRequest");
     }
 
     private void InitPlayfab(string id)
@@ -83,10 +86,13 @@ public class PlayfabInterface : MonoBehaviour
 
     internal void UpdateUsername(string _username)
     {
-        var updateRequest = new UpdateUserTitleDisplayNameRequest();
-        updateRequest.DisplayName = _username;
-        GameManager.Instance.localAccountData.SetUsername(_username);
-        PlayFabClientAPI.UpdateUserTitleDisplayName(updateRequest, OnUpdateNameSuccess, OnUpdateNameFailure);
+        pendingRequest = true;
+        PlayFabClientAPI.UpdateUserTitleDisplayName(new UpdateUserTitleDisplayNameRequest
+        {
+            DisplayName = _username
+        },
+     result2 => { pendingRequest = false; },
+      error => { Debug.LogError(error.GenerateErrorReport()); });
     }
     internal void UpdateContactEmail(string _mail)
     {
@@ -106,6 +112,7 @@ public class PlayfabInterface : MonoBehaviour
 
     internal void GetCurrencies()
     {
+        pendingRequest = true;
         PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest(),
                   result =>
                   {
@@ -113,12 +120,35 @@ public class PlayfabInterface : MonoBehaviour
                       {
                           SetCurrencies(langage.Key, langage.Value);
                       }
-                      UIManager.Instance.ActualizeData();
-                      SceneManager.Instance.LoadingScene(SceneManager.SceneType.MENU);
+                      pendingRequest = false;
                   },
                    error => { Debug.LogError(error.GenerateErrorReport()); });
     }
 
+    internal void GetItemsCalatogs()
+    {
+
+        var updateRequest = new GetCatalogItemsRequest();
+        updateRequest.CatalogVersion = "Items";
+        PlayFabClientAPI.GetCatalogItems(new GetCatalogItemsRequest(),ItemsList,OnRegisterFailure);
+
+
+
+    }
+
+    private void ItemsList(GetCatalogItemsResult result)
+    {
+        for (int i = 0; i < result.Catalog.Count; i++)
+        {
+            Items temp = new Items();
+            temp.id = result.Catalog[i].ItemId;
+            temp.itemsName = result.Catalog[i].DisplayName;
+            temp.typeOfItems = Items.SetTypeOfItems(result.Catalog[i].ItemClass);
+           // temp.levelRequiered = result.Catalog[i].CustomData
+
+        }
+
+    }
 
     #endregion
     // Start is called before the first frame update
@@ -136,15 +166,11 @@ public class PlayfabInterface : MonoBehaviour
         GameManager.Instance.localAccountData.SetUsername(temp_mail);
         GameManager.Instance.localAccountData.SetUsername(result.Username);
         GameManager.Instance.localAccountData.SetID(result.PlayFabId);
-        var updateRequest = new UpdateUserTitleDisplayNameRequest();
-        updateRequest.DisplayName = GameManager.Instance.localAccountData.GetUsername();
-        PlayFabClientAPI.UpdateUserTitleDisplayName(updateRequest, OnUpdateNameSuccess, OnUpdateNameFailure);
+        SetData();
 
 
-        // UpdateAccountData();
 
     }
-
     void OnRegisterFailure(PlayFabError error)
     {
         Debug.LogError("Erreur d'Enregistement");
@@ -193,13 +219,41 @@ public class PlayfabInterface : MonoBehaviour
 
     }
 
-
-    void OnUpdateNameSuccess(UpdateUserTitleDisplayNameResult result)
+    async void SetData()
     {
+        UpdateUsername(GameManager.Instance.localAccountData.GetUsername());
+        UpdatePlayerLevel(1);
         GetCurrencies();
 
+        pendingRequest = true;
+        UIManager.Instance.ActualizeData();
+        pendingRequest = true;
+        SceneManager.Instance.LoadingScene(SceneManager.SceneType.MENU);
+    }
+    void UpdatePlayerLevel(int level)
+    {
+        pendingRequest = true;
+        PlayFabClientAPI.UpdatePlayerStatistics(new UpdatePlayerStatisticsRequest
+        {
+            Statistics = new List<StatisticUpdate> {
+        new StatisticUpdate { StatisticName = "Level", Value = level }
+         }
+        },
+         result2 =>
+         {
+             GameManager.Instance.localAccountData.level = 1;
+             pendingRequest = false;
+         },
+          error => { Debug.LogError(error.GenerateErrorReport()); });
     }
 
+    IEnumerator WaitEndOfRequest()
+    {
+        while (pendingRequest)
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
+    }
     void OnUpdateNameFailure(PlayFabError error)
     {
         Debug.LogError("Erreur d'update Name");
