@@ -71,6 +71,7 @@ public class UIManager : MonoBehaviour
         goldText.text = GameManager.Instance.localAccountData.gold.ToString();
         gemsText.text = GameManager.Instance.localAccountData.gems.ToString();
         energyText.text = GameManager.Instance.localAccountData.energy.ToString();
+        
     }
 
 

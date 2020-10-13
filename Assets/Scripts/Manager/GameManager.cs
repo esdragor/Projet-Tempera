@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour
     }
 
     public AccountData localAccountData;
-    public List<Items> itemsList;
+   // public List<Items> itemsList;
     void Awake()
     {
         if (instance != null)
