@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 [CreateAssetMenu(fileName = "Items", menuName = "Items", order = 51)]
@@ -14,7 +15,7 @@ public class Items : ScriptableObject
         None
     }
 
-       public enum TypeOfMetiers
+    public enum TypeOfMetiers
     {
         Mineur,
         Forgeron,
@@ -36,6 +37,7 @@ public class Items : ScriptableObject
     public int sellGold;
     public int buyGold;
     public bool isStackable;
+    public string idItemNecessary;
 
 
     public static TypeOfItems SetTypeOfItems(string name)
@@ -62,15 +64,34 @@ public class Items : ScriptableObject
         return TypeOfMetiers.None;
     }
 
-    /* public static int SetTypeOfItems(string name)
-    {
-        if (name.Equals("Construction"))
-            return TypeOfItems.Construction;
-        if (name.Equals("Craft"))
-            return TypeOfItems.Craft;
-        if (name.Equals("Matiere"))
-            return TypeOfItems.Matiere;
 
-        return TypeOfItems.None;
-    }*/
+    public static string[] ParseCustomData(string data)
+    {
+        string[] separator = { ",", ":" };
+        int count = CountStringOccurrences(data, ",");
+        string[] result = data.Split(separator, count, System.StringSplitOptions.RemoveEmptyEntries);
+        for (int i = 0; i < result.Length; i++)
+        {
+            result[i] = result[i].Replace("{", "");
+            result[i] = result[i].Replace("\"", "");
+        }
+     
+        return result;
+    }
+
+    private static int CountStringOccurrences(string text, string pattern)
+    {
+        // Loop through all instances of the string 'text'.
+        int count = 2;
+        int i = 0;
+        while ((i = text.IndexOf(pattern, i)) != -1)
+        {
+            i += pattern.Length;
+            count++;
+        }
+        return count * 2;
+    }
+
+
+   
 }

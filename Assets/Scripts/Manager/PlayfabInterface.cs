@@ -145,7 +145,7 @@ public class PlayfabInterface : MonoBehaviour
             Items temp = new Items();
             temp.id = result.Catalog[i].ItemId;
             temp.itemsName = result.Catalog[i].DisplayName;
-            for(int j = 0; j < result.Catalog[i].Tags.Count; j++)
+            for (int j = 0; j < result.Catalog[i].Tags.Count; j++)
             {
                 temp.typeOfItems[j] = Items.SetTypeOfItems(result.Catalog[i].Tags[j]);
             }
@@ -164,6 +164,9 @@ public class PlayfabInterface : MonoBehaviour
                 if (currency.Key.Equals("GE"))
                     temp.costGems = (int)currency.Value;
             }
+            string[] customDataTab = Items.ParseCustomData(result.Catalog[i].CustomData);
+            for (int j = 0; j < customDataTab.Length; j++)
+                SetCustomData(temp, customDataTab[i], customDataTab[i + 1]);
             // temp.levelRequiered = result.Catalog[i].CustomData
 
         }
@@ -278,6 +281,18 @@ public class PlayfabInterface : MonoBehaviour
             GameManager.Instance.localAccountData.gems = value;
         if (key.Equals("EN"))
             GameManager.Instance.localAccountData.energy = value;
+    }
+
+    private void SetCustomData(Items item, string key, string value)
+    {
+        if (key.Equals("Level"))
+            item.levelRequiered = Int32.Parse(value);
+        if (key.Equals("Vente"))
+            item.sellGold = Int32.Parse(value);
+        if (key.Equals("Achat"))
+            item.buyGold = Int32.Parse(value);
+        if (key.Equals("Besoin"))
+            item.idItemNecessary = value;
     }
 
     private void SetData(GetPlayerProfileResult result)
