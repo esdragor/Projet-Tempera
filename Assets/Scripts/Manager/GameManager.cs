@@ -36,6 +36,7 @@ public class GameManager : MonoBehaviour
             instance = this;
             DontDestroyOnLoad(instance);
         }
+        Debug.Log("Coucou");
     }
 
     // Update is called once per frame
