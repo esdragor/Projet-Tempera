@@ -23,12 +23,21 @@ public class Items : ScriptableObject
         None
     }
 
+    public enum TypeOfTiers
+    {
+        Tier1 = 1,
+        Tier2 = 2,
+        Tier3 = 3,
+        Tier4 = 4,
+        None = 0,
+    }
+
     public string id;
     public string itemsName;
     public string itemDescription;
     public string urlImg;
     public TypeOfMetiers itemMetier;
-    public List<TypeOfItems> typeOfItems;
+    public List<TypeOfItems> typeOfItems = new List<TypeOfItems>();
     public int levelRequiered;
     public int timeRequiered;
     public int costEnergy;
@@ -37,9 +46,13 @@ public class Items : ScriptableObject
     public int sellGold;
     public int buyGold;
     public bool isStackable;
-    public string idItemNecessary;
 
 
+    public TypeOfTiers tierNecessity;
+    public int idItemNecessary;
+    public Items itemNecessary;
+
+    public Items Necessary;
     public static TypeOfItems SetTypeOfItems(string name)
     {
         if (name.Equals("Construction"))
@@ -74,8 +87,9 @@ public class Items : ScriptableObject
         {
             result[i] = result[i].Replace("{", "");
             result[i] = result[i].Replace("\"", "");
+            result[i] = result[i].Replace("}", "");
         }
-     
+
         return result;
     }
 
@@ -93,5 +107,5 @@ public class Items : ScriptableObject
     }
 
 
-   
+
 }
