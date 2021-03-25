@@ -30,7 +30,7 @@ namespace Tempera
                 DeveloperSecretKey = Environment.GetEnvironmentVariable("PLAYFAB_DEV_SECRET_KEY", EnvironmentVariableTarget.Process),
             };
             var serverApi = new PlayFabServerInstanceAPI(apiSettings);
-            var valueToUp = 3;
+            var valueToUp = 1;
             var request = new PlayFab.ServerModels.UpdatePlayerStatisticsRequest();
             var stat = new PlayFab.ServerModels.StatisticUpdate { StatisticName = "Level", Value = valueToUp };
             request.Statistics = new List<PlayFab.ServerModels.StatisticUpdate> { stat };

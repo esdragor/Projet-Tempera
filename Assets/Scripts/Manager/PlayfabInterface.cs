@@ -8,7 +8,7 @@ using UnityEngine;
 
 public class PlayfabInterface : MonoBehaviour
 {
-    private static PlayfabInterface m_instance = null;
+    private static PlayfabInterface m_instance;
     public System.Action OnConnexion;
 
     private string temp_mail;
@@ -26,24 +26,23 @@ public class PlayfabInterface : MonoBehaviour
         {
             if (m_instance == null)
             {
-                m_instance = new PlayfabInterface();
+                m_instance = new GameObject("PlayfabInterface").AddComponent<PlayfabInterface>();
             }
 
             return m_instance;
+
         }
         private set { }
     }
 
     private void Awake()
     {
-        if (instance != null)
+        if (m_instance == null)
         {
-            Destroy(gameObject);
+            m_instance = this;
+            DontDestroyOnLoad(gameObject);
         }
-        else
-        {
-            instance = this;
-        }
+
 
         InitPlayfab("5357B");
         StartCoroutine("WaitEndOfRequest");
@@ -132,56 +131,51 @@ public class PlayfabInterface : MonoBehaviour
         pendingRequest = true;
         var updateRequest = new GetCatalogItemsRequest();
         updateRequest.CatalogVersion = "Items";
-        PlayFabClientAPI.GetCatalogItems(new GetCatalogItemsRequest(), ItemsList, OnRegisterFailure);
+        //  PlayFabClientAPI.GetCatalogItems(new GetCatalogItemsRequest(), ItemsList, OnRegisterFailure);
+    }
 
 
+    //AZUR FUNCTION LATER
+    public void SetStatisticsPlayer()
+    {
+        pendingRequest = true;
+        PlayFabClientAPI.UpdatePlayerStatistics(new UpdatePlayerStatisticsRequest
+        {
+            Statistics = new List<StatisticUpdate> {
+        new StatisticUpdate { StatisticName = "PlayerLevel", Value = 1 }
+         }
+        },
+        result2 =>
+        {
+            pendingRequest = false;
+            Debug.Log("User statistics updated");
+        },
+        error => { Debug.LogError(error.GenerateErrorReport()); });
 
     }
 
-    private void ItemsList(GetCatalogItemsResult result)
+    public void GetStatisticsPlayer()
     {
-        for (int i = 0; i < result.Catalog.Count; i++)
+        pendingRequest = true;
+        PlayFabClientAPI.GetPlayerStatistics(new GetPlayerStatisticsRequest(), OnGetStatisticsPlayer, error => Debug.LogError(error.GenerateErrorReport()));
+    }
+
+    //CHECK LE CLOUD et return la bonne valeur
+    void OnGetStatisticsPlayer(GetPlayerStatisticsResult result)
+    {
+        Debug.Log("Received the following Statistics:");
+        foreach (var eachStat in result.Statistics)
         {
-            Items temp = new Items();
-            temp.id = result.Catalog[i].ItemId;
-            temp.itemsName = result.Catalog[i].DisplayName;
-            temp.tierNecessity = Items.TypeOfTiers.None;
-            temp.idItemNecessary = 0 ;
-
-            for (int j = 0; j < result.Catalog[i].Tags.Count; j++)
+            //Debug.Log("Statistic (" + eachStat.StatisticName + "): " + eachStat.Value);
+            switch (eachStat.StatisticName)
             {
-                temp.typeOfItems.Add(Items.SetTypeOfItems(result.Catalog[i].Tags[j]));
+                case "PlayerLevel":
+                    Debug.LogError("here" + eachStat.Value);
+                    GameManager.Instance.localAccountData.level = eachStat.Value;
+                    break;
             }
-            temp.urlImg = result.Catalog[i].ItemImageUrl;
-            temp.itemMetier = Items.SetTypeOfMetier(result.Catalog[i].ItemClass);
-            temp.isStackable = result.Catalog[i].IsStackable;
-            temp.itemDescription = result.Catalog[i].Description;
-            foreach (KeyValuePair<string, uint> currency in result.Catalog[i].VirtualCurrencyPrices)
-            {
-                if (currency.Key.Equals("EN"))
-                    temp.costEnergy = (int)currency.Value;
-
-                if (currency.Key.Equals("OR"))
-                    temp.costGold = (int)currency.Value;
-
-                if (currency.Key.Equals("GE"))
-                    temp.costGems = (int)currency.Value;
-            }
-
-
-            string[] customDataTab = Items.ParseCustomData(result.Catalog[i].CustomData);
-
-            for (int j = 0; j < customDataTab.Length; j++)
-            {
-                if (j % 2 == 0)
-                {
-                    Debug.Log(j);
-                    SetCustomData(temp, customDataTab[j], customDataTab[j + 1]);
-                }
-            }
-
-            GameManager.Instance.itemsList.Add(temp);
         }
+
         pendingRequest = false;
 
     }
@@ -202,6 +196,7 @@ public class PlayfabInterface : MonoBehaviour
         GameManager.Instance.localAccountData.SetUsername(temp_mail);
         GameManager.Instance.localAccountData.SetUsername(result.Username);
         GameManager.Instance.localAccountData.SetID(result.PlayFabId);
+        SetStatisticsPlayer();
         UpdatePlayerData();
     }
     void OnRegisterFailure(PlayFabError error)
@@ -214,6 +209,7 @@ public class PlayfabInterface : MonoBehaviour
 
     void OnLoginSuccess(LoginResult login)
     {
+        Debug.LogError("test");
         GameManager.Instance.localAccountData.idPlayfab = login.PlayFabId;
         PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
         {
@@ -256,9 +252,9 @@ public class PlayfabInterface : MonoBehaviour
     {
         UpdateUsername(GameManager.Instance.localAccountData.GetUsername());
         GetCurrencies();
-        GetItemsCalatogs();
-        SetItemNecessary();
-        SetLevelAzur();
+        GetStatisticsPlayer();
+        UIManager.Instance.ActualizeData();
+        SceneManager.Instance.LoadingScene(SceneManager.SceneType.MENU);
 
     }
     IEnumerator WaitEndOfRequest()
@@ -268,6 +264,7 @@ public class PlayfabInterface : MonoBehaviour
             yield return new WaitForSeconds(0.2f);
         }
     }
+
     void OnUpdateNameFailure(PlayFabError error)
     {
         Debug.LogError("Erreur d'update Name");
@@ -299,68 +296,12 @@ public class PlayfabInterface : MonoBehaviour
             GameManager.Instance.localAccountData.energy = value;
     }
 
-    private void SetCustomData(Items item, string key, string value)
-    {
-        Debug.LogError(key + " : " + value);
-        if (key.Equals("Level"))
-            item.levelRequiered = Int32.Parse(value);
-        if (key.Equals("Vente"))
-            item.sellGold = Int32.Parse(value);
-        if (key.Equals("Achat"))
-            item.buyGold = Int32.Parse(value);
-        if (key.Equals("BesoinID"))
-            item.idItemNecessary = Int32.Parse(value);
-        if (key.Equals("Tier"))
-            item.tierNecessity = (Items.TypeOfTiers)Int32.Parse(value);
-    }
-
-
-    private void SetItemNecessary()
-    {
-        for (int i = 0; i < GameManager.Instance.itemsList.Count; i++)
-        {
-            if (GameManager.Instance.itemsList[i].idItemNecessary != 0)
-            {
-                GameManager.Instance.itemsList[i].itemNecessary = GameManager.Instance.itemsList[GameManager.Instance.itemsList[i].idItemNecessary - 1];
-            }
-        }
-
-    }
 
     private void SetData(GetPlayerProfileResult result)
     {
         GameManager.instance.localAccountData.SetUsername(result.PlayerProfile.DisplayName);
-        GetCurrencies();
-
-
-        /* PlayFabCloudScriptAPI.ExecuteFunction(new ExecuteFunctionRequest()
-         {
-             Entity = new PlayFab.CloudScriptModels.EntityKey()
-             {
-                 Id = PlayFabSettings.staticPlayer.EntityId, //Get this from when you logged in,
-                 Type = PlayFabSettings.staticPlayer.EntityType, //Get this from when you logged in
-             },
-             FunctionName = "FirstMessage", //This should be the name of your Azure Function that you created.
-             FunctionParameter = new Dictionary<string, object>() { { "inputValue", "Test" } }, //This is the data that you would want to pass into your function.
-             GeneratePlayStreamEvent = false //Set this to true if you would like this call to show up in PlayStream
-         }, (ExecuteFunctionResult result2) =>
-         {
-             if (result2.FunctionResultTooLarge ?? false)
-             {
-                 Debug.Log("This can happen if you exceed the limit that can be returned from an Azure Function, See PlayFab Limits Page for details.");
-                 return;
-             }
-             Debug.Log($"The {result2.FunctionName} function took {result2.ExecutionTimeMilliseconds} to complete");
-             Debug.Log($"Result: {result2.FunctionResult.ToString()}");
-         }, (PlayFabError error) =>
-         {
-             Debug.Log($"Opps Something went wrong: {error.GenerateErrorReport()}");
-         });*/
+        UpdatePlayerData();
     }
-
-
-
-
     private void SetLevelAzur()
     {
         PlayFabCloudScriptAPI.ExecuteFunction(new ExecuteFunctionRequest()
@@ -371,17 +312,11 @@ public class PlayfabInterface : MonoBehaviour
                 Type = PlayFabSettings.staticPlayer.EntityType, //Get this from when you logged in
             },
             FunctionName = "SetDataRegister", //This should be the name of your Azure Function that you created.
-            //FunctionParameter = new Dictionary<string, object>() { { "inputValue", "Test" } }, //This is the data that you would want to pass into your function.
+                                              //FunctionParameter = new Dictionary<string, object>() { { "inputValue", "Test" } }, //This is the data that you would want to pass into your function.
             GeneratePlayStreamEvent = false //Set this to true if you would like this call to show up in PlayStream
         }, (ExecuteFunctionResult result2) =>
         {
             Debug.Log("SET LEVEL TO " + result2.FunctionResult.ToString());
-            GameManager.Instance.localAccountData.level = Int32.Parse(result2.FunctionResult.ToString());
-            UIManager.Instance.ActualizeData();
-            SceneManager.Instance.LoadingScene(SceneManager.SceneType.MENU);
-
-
-
         }, (PlayFabError error) =>
         {
             Debug.Log($"Opps Something went wrong: {error.GenerateErrorReport()}");
