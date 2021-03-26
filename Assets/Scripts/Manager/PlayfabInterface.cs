@@ -126,12 +126,21 @@ public class PlayfabInterface : MonoBehaviour
                    error => { Debug.LogError(error.GenerateErrorReport()); });
     }
 
-    internal void GetItemsCalatogs()
+    internal void GetCardsCalatogs()
     {
         pendingRequest = true;
         var updateRequest = new GetCatalogItemsRequest();
-        updateRequest.CatalogVersion = "Items";
-        //  PlayFabClientAPI.GetCatalogItems(new GetCatalogItemsRequest(), ItemsList, OnRegisterFailure);
+        updateRequest.CatalogVersion = "Cards";
+        PlayFabClientAPI.GetCatalogItems(new GetCatalogItemsRequest(), CatalogsCards, OnRegisterFailure);
+    }
+
+    private void CatalogsCards(GetCatalogItemsResult cardsResult)
+    {
+        foreach (CatalogItem cardsData in cardsResult.Catalog)
+        {
+            CardsManager.instance.GenerateCards(cardsData);
+        }
+        pendingRequest = false;
     }
 
 
@@ -160,7 +169,6 @@ public class PlayfabInterface : MonoBehaviour
         PlayFabClientAPI.GetPlayerStatistics(new GetPlayerStatisticsRequest(), OnGetStatisticsPlayer, error => Debug.LogError(error.GenerateErrorReport()));
     }
 
-    //CHECK LE CLOUD et return la bonne valeur
     void OnGetStatisticsPlayer(GetPlayerStatisticsResult result)
     {
         Debug.Log("Received the following Statistics:");
@@ -175,9 +183,7 @@ public class PlayfabInterface : MonoBehaviour
                     break;
             }
         }
-
         pendingRequest = false;
-
     }
 
     #endregion
@@ -253,6 +259,7 @@ public class PlayfabInterface : MonoBehaviour
         UpdateUsername(GameManager.Instance.localAccountData.GetUsername());
         GetCurrencies();
         GetStatisticsPlayer();
+        GetCardsCalatogs();
         UIManager.Instance.ActualizeData();
         SceneManager.Instance.LoadingScene(SceneManager.SceneType.MENU);
 
